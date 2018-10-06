@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="668.0" prefWidth="727.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="excel.gui.FormController">
+   <children>
+      <Label layoutX="64.0" layoutY="63.0" prefHeight="48.0" prefWidth="89.0" text="検索先" />
+      <Label layoutX="64.0" layoutY="134.0" prefHeight="48.0" prefWidth="89.0" text="出力先" />
+      <TextField fx:id="inputpath" layoutX="188.0" layoutY="72.0" prefHeight="31.0" prefWidth="271.0" />
+      <TextField fx:id="outputpath" layoutX="188.0" layoutY="143.0" prefHeight="31.0" prefWidth="271.0" />
+      <Button layoutX="466.0" layoutY="72.0" mnemonicParsing="false" onAction="#searchInput" text="選択">
+         <tooltip>
+            <Tooltip text="検索対象のExcelがあるディレクトリを指定してください" />
+         </tooltip></Button>
+      <Button layoutX="466.0" layoutY="143.0" mnemonicParsing="false" onAction="#searchOutput" text="選択">
+         <tooltip>
+            <Tooltip text="検索結果の出力先ディレクトリを指定してください。&#10;検索結果はresult.txtというファイル名で作られます" />
+         </tooltip></Button>
+      <Button layoutX="64.0" layoutY="263.0" mnemonicParsing="false" onAction="#onSearch" prefHeight="31.0" prefWidth="167.0" text="検索実行" />
+      <TextArea fx:id="resultField" layoutX="64.0" layoutY="363.0" prefHeight="269.0" prefWidth="607.0" style="-fx-background-color: white; -fx-border-color: red;" />
+      <Label layoutX="64.0" layoutY="196.0" prefHeight="48.0" prefWidth="89.0" text="検索文字列" />
+      <TextField fx:id="searchStr" layoutX="188.0" layoutY="205.0" prefHeight="31.0" prefWidth="271.0" />
+      <Label layoutX="64.0" layoutY="310.0" prefHeight="48.0" prefWidth="312.0" text="実行状況" />
+   </children>
+</AnchorPane>
