@@ -28,11 +28,13 @@ public class FormController {
 	protected void onSearch(ActionEvent evt) {
 		try {
 			new FindingStr(
-				s->resultField.setText(s + "\n" +resultField.getText() )
-			)
+				s->resultField.setText(s + "\n" +resultField.getText() ),
+				(s)->{
+					if(s.matches(searchStr.getText()))return s;
+					else return "";
+				})
 			.search(inputpath.getText(), 
-					outputpath.getText()+"\\result.txt",
-					searchStr.getText());
+					outputpath.getText()+"\\result.txt");
 		}catch(Exception e) {
 			e.printStackTrace();
 		}

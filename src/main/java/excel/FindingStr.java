@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.apache.poi.hssf.usermodel.HSSFTextbox;
+import org.apache.poi.hssf.usermodel.HSSFShapeGroup;
+import org.apache.poi.hssf.usermodel.HSSFSimpleShape;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -24,31 +25,30 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFShapeGroup;
 import org.apache.poi.xssf.usermodel.XSSFSimpleShape;
 
 public class FindingStr  implements FileVisitor<Path> {
 	//セルから値が取れた時に実行するFunctionを指定する
-	private Consumer<String> func = null;
+	private Function<String,String> func = null;
 	//セルから日付値が取れた時に実行するFunctionを指定する
 	private Function<Date,String> dateFormat = null;
 	//セルのGrep結果を格納するリスト
 	private List<String>result = new ArrayList<String>();
 	//パス操作の状況をFindingStrの実行先に通知するFucntionを指定する
-	private Consumer<String> parentFunc = null;
+	private Consumer<String> pathFunc = null;
 	
-	public FindingStr(Consumer<String> parentFunc) {
-		this.parentFunc = parentFunc;
+	//pathFunc:パス走査時に実行中のパスを使う処理
+	//func:セルの値を取得したいときに実行する処理
+	public FindingStr(Consumer<String> pathFunc,Function<String,String> func) {
+		this.pathFunc = pathFunc;
+		this.func= func;
 	}	
 	
 	//検索を実行する
 	//path:検索対象のディレクトリ
 	//outpath:検索結果の出力先
-	//regex:検索対象文字列
-	public void search(String path,String outpath,String regex) throws Exception{
-		//ラムダ式でExcelファイルからセルの値を取得した時に実行したいことを定義する
-		func= (s)->{
-			if(s.matches(regex))result.add(s);
-		};
+	public void search(String path,String outpath) throws Exception{
 		//ラムダ式でExcelファイルからセルで日付型だった場合のフォーマットを定義する
 		dateFormat=(d)->{
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
@@ -79,21 +79,29 @@ public class FindingStr  implements FileVisitor<Path> {
 	}
 	//セル(列)を処理するメソッド
 	private void searchCell(Cell c) {
-		func.accept(getCellValue(c));
+		result.add(func.apply(getCellValue(c)));
 	}
 	
 	//オートシェイプを処理するメソッド
 	private void handleShape(Object d) {
 		String s="";
-		//XLSX形式の場合の処理
+		//shapeの処理(XLSX形式)
 		if(d instanceof XSSFSimpleShape) {
 			s =((XSSFSimpleShape) d).getText();
 		}
-		//XLS形式の場合の処理
-		if(d instanceof HSSFTextbox) {
-			s =((HSSFTextbox) d).getString().getString();
+		//shapeの処理(XLS形式)
+		if(d instanceof HSSFSimpleShape) {
+			s =((HSSFSimpleShape) d).getString().getString();
 		}
-		func.accept(s);
+		//グループ化されたshapeの処理(XLSX形式)
+		if(d instanceof XSSFShapeGroup) {
+			((XSSFShapeGroup)d).forEach(gs->handleShape(gs));
+		}
+		//グループ化されたshapeの処理(XLS形式)
+		if(d instanceof HSSFShapeGroup) {
+			((HSSFShapeGroup)d).forEach(gs->handleShape(gs));
+		}
+		result.add(func.apply(s));
 	}
 	
 	//セルのテキスト値を取得するメソッド
@@ -113,7 +121,13 @@ public class FindingStr  implements FileVisitor<Path> {
 			}
 		}
 		if(CellType.FORMULA == t) {
-			return c.getCellFormula();
+			//セルに関数が含まれている場合、まずは数値形式でデータを取り出す
+			try {
+				return c.getNumericCellValue()+"";
+			}catch(Exception e) {
+				//数値形式での取り出しに失敗したら文字列型でデータを取り出す
+				return c.getStringCellValue();
+			}
 		}
 		if(CellType.ERROR == t) {
 			return c.getErrorCellValue() + "";
@@ -136,7 +150,7 @@ public class FindingStr  implements FileVisitor<Path> {
 	//パスを走査時にファイルだった時の処理
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-		parentFunc.accept(file.toFile().getAbsolutePath());
+		pathFunc.accept(file.toFile().getAbsolutePath());
 		
 		//Excel形式以外のファイルは読み飛ばす
 		if(!file.toFile().getName().matches(".*\\.xls|.*\\.xlsx")) {
@@ -146,7 +160,7 @@ public class FindingStr  implements FileVisitor<Path> {
 			//Excel形式のファイルの時、ブックの探索を行う
 			searchWorkBook(WorkbookFactory.create(file.toFile()));
 		}catch(Exception e) {
-			System.out.println("ファイル読み込み時にエラーが発生しました");
+			System.out.println("ファイル読み込み時にエラーが発生しました "+file.getNameCount());
 		}
 		return FileVisitResult.CONTINUE;	
 	}
