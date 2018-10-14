@@ -10,22 +10,46 @@
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="668.0" prefWidth="727.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="excel.gui.FormController">
    <children>
-      <Label layoutX="64.0" layoutY="63.0" prefHeight="48.0" prefWidth="89.0" text="検索先" />
-      <Label layoutX="64.0" layoutY="134.0" prefHeight="48.0" prefWidth="89.0" text="出力先" />
-      <TextField fx:id="inputpath" layoutX="188.0" layoutY="72.0" prefHeight="31.0" prefWidth="271.0" />
-      <TextField fx:id="outputpath" layoutX="188.0" layoutY="143.0" prefHeight="31.0" prefWidth="271.0" />
-      <Button layoutX="466.0" layoutY="72.0" mnemonicParsing="false" onAction="#searchInput" text="選択">
-         <tooltip>
-            <Tooltip text="検索対象のExcelがあるディレクトリを指定してください" />
-         </tooltip></Button>
-      <Button layoutX="466.0" layoutY="143.0" mnemonicParsing="false" onAction="#searchOutput" text="選択">
-         <tooltip>
-            <Tooltip text="検索結果の出力先ディレクトリを指定してください。&#10;検索結果はresult.txtというファイル名で作られます" />
-         </tooltip></Button>
-      <Button layoutX="64.0" layoutY="263.0" mnemonicParsing="false" onAction="#onSearch" prefHeight="31.0" prefWidth="167.0" text="検索実行" />
-      <TextArea fx:id="resultField" layoutX="64.0" layoutY="363.0" prefHeight="269.0" prefWidth="607.0" style="-fx-background-color: white; -fx-border-color: red;" />
-      <Label layoutX="64.0" layoutY="196.0" prefHeight="48.0" prefWidth="89.0" text="検索文字列" />
-      <TextField fx:id="searchStr" layoutX="188.0" layoutY="205.0" prefHeight="31.0" prefWidth="271.0" />
-      <Label layoutX="64.0" layoutY="310.0" prefHeight="48.0" prefWidth="312.0" text="実行状況" />
+      <TabPane layoutY="23.0" prefHeight="616.0" prefWidth="707.0" tabClosingPolicy="UNAVAILABLE">
+        <tabs>
+          <Tab text="検索オプション">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="192.0" prefWidth="600.0">
+                     <children>
+                        <Label layoutX="18.0" layoutY="23.0" prefHeight="48.0" prefWidth="89.0" text="検索先" />
+                        <TextField fx:id="inputpath" layoutX="117.0" layoutY="32.0" prefHeight="31.0" prefWidth="271.0" />
+                        <Button layoutX="453.0" layoutY="32.0" mnemonicParsing="false" onAction="#searchInput" text="選択">
+                           <tooltip>
+                              <Tooltip text="検索対象のExcelがあるディレクトリを指定してください" />
+                           </tooltip>
+                        </Button>
+                        <Label layoutX="18.0" layoutY="80.0" prefHeight="48.0" prefWidth="89.0" text="出力先" />
+                        <TextField fx:id="outputpath" layoutX="117.0" layoutY="88.0" prefHeight="31.0" prefWidth="271.0" />
+                        <Label layoutX="14.0" layoutY="135.0" prefHeight="48.0" prefWidth="89.0" text="検索文字列" />
+                        <TextField fx:id="searchStr" layoutX="117.0" layoutY="143.0" prefHeight="31.0" prefWidth="271.0" />
+                        <Button layoutX="453.0" layoutY="88.0" mnemonicParsing="false" onAction="#searchOutput" text="選択">
+                           <tooltip>
+                              <Tooltip text="検索結果の出力先ディレクトリを指定してください。&#10;検索結果はresult.txtというファイル名で作られます" />
+                           </tooltip>
+                        </Button>
+                        <Button layoutX="20.0" layoutY="345.0" mnemonicParsing="false" onAction="#onSearch" prefHeight="31.0" prefWidth="167.0" text="検索実行" />
+                        <CheckBox fx:id="checkReg" layoutX="37.0" layoutY="215.0" mnemonicParsing="false" onAction="#onRegCheck" prefHeight="38.0" prefWidth="153.0" text="正規表現を使う" />
+                        <CheckBox fx:id="checkUpLowerStr" layoutX="195.0" layoutY="215.0" mnemonicParsing="false" onAction="#onUpLowerStrcheck" onMouseClicked="#onUpLowerStrcheck" prefHeight="38.0" prefWidth="221.0" text="大文字小文字を無視する" />
+                     </children>
+                  </AnchorPane>
+            </content>
+          </Tab>
+          <Tab text="実行状況">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="485.0" prefWidth="707.0">
+                     <children>
+                        <TextArea fx:id="resultField" layoutX="20.0" layoutY="48.0" prefHeight="453.0" prefWidth="607.0" style="-fx-background-color: white; -fx-border-color: red;" />
+                        <Label layoutX="-91.0" prefHeight="48.0" prefWidth="312.0" text="実行状況" />
+                     </children>
+                  </AnchorPane>
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
    </children>
 </AnchorPane>
