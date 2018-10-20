@@ -1,14 +1,10 @@
-package excel;
+package poi.Grep;
 
-import java.io.IOException;
+import java.io.File;
 import java.nio.charset.Charset;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,26 +19,30 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFShapeGroup;
 import org.apache.poi.xssf.usermodel.XSSFSimpleShape;
 
-public class FindingStr  implements FileVisitor<Path> {
+import poi.file.FileSearcher;
+
+public class FindingStr   {
 	//セルから値が取れた時に実行するFunctionを指定する
-	private Function<String,String> func = null;
+	private Function<String,String> exeOnGetCellValue = null;
 	//セルから日付値が取れた時に実行するFunctionを指定する
 	private Function<Date,String> dateFormat = null;
 	//セルのGrep結果を格納するリスト
 	private List<String>result = new ArrayList<String>();
-	//パス操作の状況をFindingStrの実行先に通知するFucntionを指定する
-	private Consumer<String> pathFunc = null;
 	
+	private FileSearcher fileSearcher;
 	//pathFunc:パス走査時に実行中のパスを使う処理
 	//func:セルの値を取得したいときに実行する処理
 	public FindingStr(Consumer<String> pathFunc,Function<String,String> func) {
-		this.pathFunc = pathFunc;
-		this.func= func;
+		this.fileSearcher = new FileSearcher();
+		this.fileSearcher.acceptBeforeExe(pathFunc)
+		.acceptMainExe(this::searchWorkBook)
+		.acceptFileCon(f->f.getName().matches(".*\\.xls|.*\\.xlsx"));
+		
+		this.exeOnGetCellValue= func;
 	}	
 	
 	//検索を実行する
@@ -55,7 +55,7 @@ public class FindingStr  implements FileVisitor<Path> {
 			return sdf.format(d);
 		};
 		//指定されたパス以下のディレクトリを渡り歩く
-		Files.walkFileTree(Paths.get(path), this);
+		Files.walkFileTree(Paths.get(path), fileSearcher);
 		//検索結果をファイルに出力する
 		Files.write(Paths.get(outpath),
 				this.result,
@@ -63,13 +63,20 @@ public class FindingStr  implements FileVisitor<Path> {
 				StandardOpenOption.CREATE);
 	}
 
-	private void searchWorkBook(Workbook  wk) {
-		wk.forEach(s -> searchSheet(s));
+	//WorkBookの探索
+	private void searchWorkBook(File  file) {
+		try {
+			WorkbookFactory.create(file)
+			.forEach(s -> searchSheet(s));
+		}catch(Exception e) {
+			System.out.println("ファイル読み込み時にエラーが発生しました "+file.getName());
+		}
 	}
 	//シートを処理するメソッド
 	private void searchSheet(Sheet s) {
 		//オートシェイプを処理します
-		s.createDrawingPatriarch().forEach(o->handleShape(o));
+		s.createDrawingPatriarch()
+		.forEach(o->handleShape(o));
 		//セルを処理します
 		s.forEach(r->searchRow(r));
 	}
@@ -79,7 +86,7 @@ public class FindingStr  implements FileVisitor<Path> {
 	}
 	//セル(列)を処理するメソッド
 	private void searchCell(Cell c) {
-		result.add(func.apply(getCellValue(c)));
+		result.add(exeOnGetCellValue.apply(getCellValue(c)));
 	}
 	
 	//オートシェイプを処理するメソッド
@@ -101,7 +108,7 @@ public class FindingStr  implements FileVisitor<Path> {
 		if(d instanceof HSSFShapeGroup) {
 			((HSSFShapeGroup)d).forEach(gs->handleShape(gs));
 		}
-		result.add(func.apply(s));
+		result.add(exeOnGetCellValue.apply(s));
 	}
 	
 	//セルのテキスト値を取得するメソッド
@@ -136,38 +143,4 @@ public class FindingStr  implements FileVisitor<Path> {
 		
 	}
 	
-	//FileVisitorのオーバーライド用のメソッド
-	@Override
-	public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-		return FileVisitResult.CONTINUE;
-	}
-
-	@Override
-	public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-		return FileVisitResult.CONTINUE;	
-	}
-
-	//パスを走査時にファイルだった時の処理
-	@Override
-	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-		pathFunc.accept(file.toFile().getAbsolutePath());
-		
-		//Excel形式以外のファイルは読み飛ばす
-		if(!file.toFile().getName().matches(".*\\.xls|.*\\.xlsx")) {
-			return FileVisitResult.CONTINUE;
-		}
-		try {
-			//Excel形式のファイルの時、ブックの探索を行う
-			searchWorkBook(WorkbookFactory.create(file.toFile()));
-		}catch(Exception e) {
-			System.out.println("ファイル読み込み時にエラーが発生しました "+file.getNameCount());
-		}
-		return FileVisitResult.CONTINUE;	
-	}
-
-	@Override
-	public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-		return FileVisitResult.CONTINUE;	
-	}
-
 }

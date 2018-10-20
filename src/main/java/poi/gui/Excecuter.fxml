@@ -8,9 +8,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="668.0" prefWidth="727.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="excel.gui.FormController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="668.0" prefWidth="727.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="poi.gui.FormController">
    <children>
-      <TabPane layoutY="23.0" prefHeight="616.0" prefWidth="707.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane layoutX="15.0" layoutY="13.0" prefHeight="650.0" prefWidth="701.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
           <Tab text="検索オプション">
             <content>
@@ -34,7 +34,7 @@
                         </Button>
                         <Button layoutX="20.0" layoutY="345.0" mnemonicParsing="false" onAction="#onSearch" prefHeight="31.0" prefWidth="167.0" text="検索実行" />
                         <CheckBox fx:id="checkReg" layoutX="37.0" layoutY="215.0" mnemonicParsing="false" onAction="#onRegCheck" prefHeight="38.0" prefWidth="153.0" text="正規表現を使う" />
-                        <CheckBox fx:id="checkUpLowerStr" layoutX="195.0" layoutY="215.0" mnemonicParsing="false" onAction="#onUpLowerStrcheck" onMouseClicked="#onUpLowerStrcheck" prefHeight="38.0" prefWidth="221.0" text="大文字小文字を無視する" />
+                        <CheckBox fx:id="checkUpLowerStr" layoutX="195.0" layoutY="215.0" mnemonicParsing="false" onAction="#onUpLowerStrcheck" prefHeight="38.0" prefWidth="221.0" text="大文字小文字を無視する" />
                      </children>
                   </AnchorPane>
             </content>
