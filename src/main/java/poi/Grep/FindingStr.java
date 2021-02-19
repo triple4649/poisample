@@ -9,9 +9,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFShapeGroup;
 import org.apache.poi.hssf.usermodel.HSSFSimpleShape;
 import org.apache.poi.ss.usermodel.Cell;
@@ -19,6 +21,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFShapeGroup;
 import org.apache.poi.xssf.usermodel.XSSFSimpleShape;
@@ -34,6 +37,18 @@ public class FindingStr   {
 	private List<String>result = new ArrayList<String>();
 	
 	private FileSearcher fileSearcher;
+	//ワークブック名
+	private String workbookname = "";
+	//シート名
+	private String shhetname = "";
+	//セルのGrep実行後に実施する処理
+	BiConsumer<String,String>grepResult =(s,v)->{
+		String RESULT_FOMART = "ヒット文字列:%s ワークブック名:%s シート名:%s セルのアドレス:%s";
+		if(s!=null && !s.equals("")) {
+			result.add(String.format(RESULT_FOMART, s,this.workbookname,this.shhetname,v));		
+		}
+	};
+	
 	//pathFunc:パス走査時に実行中のパスを使う処理
 	//func:セルの値を取得したいときに実行する処理
 	public FindingStr(Consumer<String> pathFunc,Function<String,String> func) {
@@ -60,20 +75,30 @@ public class FindingStr   {
 		Files.write(Paths.get(outpath),
 				this.result,
 				Charset.forName("UTF-8"),
-				StandardOpenOption.CREATE);
+				StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
 	//WorkBookの探索
 	private void searchWorkBook(File  file) {
+		Workbook b =null;
 		try {
-			WorkbookFactory.create(file)
-			.forEach(s -> searchSheet(s));
+			workbookname = file.getName();
+			b = WorkbookFactory.create(file);
+			b.forEach(s -> searchSheet(s));
 		}catch(Exception e) {
+			e.printStackTrace();
 			System.out.println("ファイル読み込み時にエラーが発生しました "+file.getName());
+		}finally {
+			try {
+				b.close();
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	//シートを処理するメソッド
 	private void searchSheet(Sheet s) {
+		shhetname = s.getSheetName();
 		//オートシェイプを処理します
 		s.createDrawingPatriarch()
 		.forEach(o->handleShape(o));
@@ -86,29 +111,41 @@ public class FindingStr   {
 	}
 	//セル(列)を処理するメソッド
 	private void searchCell(Cell c) {
-		result.add(exeOnGetCellValue.apply(getCellValue(c)));
+		System.out.println();
+		String s = exeOnGetCellValue.apply(getCellValue(c));
+		String cellAddress = String.format("列 %d 行 %d", c.getAddress().getRow(),c.getAddress().getColumn());
+		grepResult.accept(s, cellAddress);
 	}
 	
 	//オートシェイプを処理するメソッド
 	private void handleShape(Object d) {
 		String s="";
-		//shapeの処理(XLSX形式)
-		if(d instanceof XSSFSimpleShape) {
-			s =((XSSFSimpleShape) d).getText();
+		try {
+			//shapeの処理(XLSX形式)
+			if(d instanceof XSSFSimpleShape) {
+				s =((XSSFSimpleShape) d).getText();
+				if(s==null)s ="";
+			}
+			//shapeの処理(XLS形式)
+			if(d instanceof HSSFSimpleShape) {
+				HSSFRichTextString rs =((HSSFSimpleShape) d).getString();
+				if(rs!=null)s =(rs.getString()==null?"":rs.getString());
+				else s ="";
+			}
+			//グループ化されたshapeの処理(XLSX形式)
+			if(d instanceof XSSFShapeGroup) {
+				((XSSFShapeGroup)d).forEach(gs->handleShape(gs));
+			}
+			//グループ化されたshapeの処理(XLS形式)
+			if(d instanceof HSSFShapeGroup) {
+				((HSSFShapeGroup)d).forEach(gs->handleShape(gs));
+			}
+			
+			grepResult.accept(exeOnGetCellValue.apply(s),"オートシェープ");
+		}catch(Exception e) {
+			e.printStackTrace();
+			System.out.println("オートシェイプの処理でエラーが発生しました");
 		}
-		//shapeの処理(XLS形式)
-		if(d instanceof HSSFSimpleShape) {
-			s =((HSSFSimpleShape) d).getString().getString();
-		}
-		//グループ化されたshapeの処理(XLSX形式)
-		if(d instanceof XSSFShapeGroup) {
-			((XSSFShapeGroup)d).forEach(gs->handleShape(gs));
-		}
-		//グループ化されたshapeの処理(XLS形式)
-		if(d instanceof HSSFShapeGroup) {
-			((HSSFShapeGroup)d).forEach(gs->handleShape(gs));
-		}
-		result.add(exeOnGetCellValue.apply(s));
 	}
 	
 	//セルのテキスト値を取得するメソッド
