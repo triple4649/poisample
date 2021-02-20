@@ -1,3 +1,8 @@
+plugins {
+	id 'com.github.johnrengelman.shadow' version '2.0.3'
+	id 'java'
+}
+
 apply plugin: 'war'
 apply plugin: 'java'
 apply plugin: 'eclipse'
@@ -6,6 +11,8 @@ repositories {
 	mavenCentral()
 }
 
+
+
 dependencies {
     compile group: 'org.apache.poi', name: 'poi-excelant', version: '3.17'
     compile group: 'dom4j', name: 'dom4j', version: '1.6.1'
@@ -13,6 +20,14 @@ dependencies {
     compile group: 'org.apache.poi', name: 'poi-ooxml-schemas', version: '4.0.0'
     compile group: 'org.apache.poi', name: 'openxml4j', version: '1.0-beta'
     compile group: 'org.apache.xmlbeans', name: 'xmlbeans', version: '2.6.0'
+	compile files('lib/kuromoji-0.7.7.jar')
+}
+
+
+jar {
+	manifest {
+		attributes "Main-Class" : "poi.gui.Excecuter"
+	}
 }
 
 test {
@@ -30,4 +45,7 @@ test {
 task wrapper(type: Wrapper) {
 	description = 'Generates gradlew[.bat] scripts'
 	gradleVersion = '4.6'
+}
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
 }
